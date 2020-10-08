@@ -1,0 +1,8 @@
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.ExtractMovieNames.resources
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.Properties.Resources.resources
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.csproj.GenerateResource.cache
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.csproj.CoreCompileInputs.cache
+C:\dev\ExtractMovieNames\ExtractMovieNames\bin\Debug\ExtractMovieNames.exe
+C:\dev\ExtractMovieNames\ExtractMovieNames\bin\Debug\ExtractMovieNames.pdb
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.exe
+C:\dev\ExtractMovieNames\ExtractMovieNames\obj\x86\Debug\ExtractMovieNames.pdb

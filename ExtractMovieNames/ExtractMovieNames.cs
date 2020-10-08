@@ -388,17 +388,44 @@ namespace ExtractMovieNames
             string line;
             string dups = string.Empty;
             Dictionary<string, string> movieNames = new Dictionary<string, string>();
+            Dictionary<string, int> dupsOnDrive = new Dictionary<string, int>();
+
             using (StreamReader inFile = new StreamReader(txtDupSourceFile.Text))
             {
                 while ((line = inFile.ReadLine()) != null)
                     movieNames.Add(line, line.Substring(0, line.IndexOf('(')).Trim());
 
-                var lookup = movieNames.ToLookup(x => x.Value, x => x.Key).Where(x => x.Count() > 1);
 
-                foreach(var item in lookup)
+                var lookup = movieNames.ToLookup(x => x.Value, x => x.Key).Where(x => x.Count() > 1);//.OrderBy(f=>f.Key.Substring(f.Key.LastIndexOf('-')));
+
+                foreach (var item in lookup)
                 {
                     var keys = item.Aggregate("", (s, v) => s + System.Environment.NewLine + v);
                     dups += keys + Environment.NewLine;// "The following keys have the value " + item.Key + ":" + keys;
+
+                    foreach (var dup in item)
+                    {
+                        if (dup.Contains("(Case)"))
+                            continue;
+
+                        string driveName = dup.Substring(dup.LastIndexOf('-'));
+                        driveName = driveName.Substring(2, driveName.IndexOf(':') - 2);
+
+                        if (!dupsOnDrive.ContainsKey(driveName))
+                            dupsOnDrive[driveName] = 1;
+                        else
+                            dupsOnDrive[driveName] += 1;
+                    }
+                }
+
+                dups += Environment.NewLine + Environment.NewLine + $"Drive\t\t\t\tNumber of duplicates" + 
+                        Environment.NewLine + "-----------------------------------------------------" + Environment.NewLine;
+
+                int longestDriveLength = dupsOnDrive.Keys.OrderByDescending(s => s.Length).First().Length;// dupsOnDrive.Keys.Where(k=>k.)
+                foreach (KeyValuePair<string, int> kvp in dupsOnDrive.OrderByDescending(k => k.Value))
+                {
+                    int spacesToAdd = longestDriveLength - kvp.Key.Length;
+                    dups += kvp.Key.PadRight(longestDriveLength + 10) + kvp.Value.ToString() + Environment.NewLine;
                 }
 
                 using (StreamWriter outFile = new StreamWriter("DuplicateMovies.txt", false))
@@ -409,6 +436,18 @@ namespace ExtractMovieNames
                     MessageBox.Show("Duplicate Movies list written to " + Application.StartupPath + "\\DuplicateMovies.txt");
                 }
             }
+        }
+        public static int CountStringOccurrences(string text, string pattern)
+        {
+            // Loop through all instances of the string 'text'.
+            int count = 0;
+            int i = 0;
+            while ((i = text.IndexOf(pattern, i)) != -1)
+            {
+                i += pattern.Length;
+                count++;
+            }
+            return count;
         }
     }
 }
