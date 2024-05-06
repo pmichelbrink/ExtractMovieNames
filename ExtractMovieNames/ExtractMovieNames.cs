@@ -40,6 +40,9 @@ namespace ExtractMovieNames
         #region btnConsolidate_Click
         private void btnConsolidate_Click(object sender, EventArgs e)
         {
+            bool readingComics = false;
+            List<string> comics = new List<string>();
+
             using (StreamWriter outFile = new StreamWriter("ConsolidatedMovies.txt", false))
             {
                 List<string> movies = new List<string>();
@@ -53,7 +56,20 @@ namespace ExtractMovieNames
 
                     while ((line = inFile.ReadLine()) != null)
                     {
-                        if (file.ToLower().Contains("consolidatedmovies.txt"))
+                        if (line.StartsWith("---Comics---"))
+                        {
+                            readingComics = true;
+                        }
+                        else if (line.StartsWith("---End Comics---"))
+                        {
+                            readingComics = false;
+                        }
+                        else if (readingComics)
+                        {
+                            if (!comics.Contains(line))
+                                comics.Add(line);
+                        }
+                        else if (file.ToLower().Contains("consolidatedmovies.txt"))
                         {
                             movies.Add(line);
                         }
@@ -75,7 +91,16 @@ namespace ExtractMovieNames
 
                 outFile.Close();
             }
-            MessageBox.Show("Consolidated list written to ConsolidatedMovies.txt");
+            MessageBox.Show($"Consolidated list written to: {Environment.NewLine} {Environment.NewLine} {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ConsolidatedMovies.txt")}");
+
+            if (!comics.Any())
+                return;
+
+            using (StreamWriter outFile = new StreamWriter("Comics.txt", false))
+            {
+                comics.ForEach(comic =>  outFile.WriteLine(comic));
+            }
+            MessageBox.Show($"Comics list written to: {Environment.NewLine} {Environment.NewLine} {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Comics.txt")}");
         }
         #endregion
 
@@ -171,6 +196,13 @@ namespace ExtractMovieNames
                         DirectoryInfo backup = new DirectoryInfo(Path.Combine(drive.Name, "backup"));
                         outFile.Write("(Contains backup folder created on: " + backup.CreationTime.ToShortDateString() + ")");
                     }
+
+                    //Check for Comics folder
+                    if (Directory.Exists(Path.Combine(drive.Name, "Comics")))
+                    {
+                        DirectoryInfo comics = new DirectoryInfo(Path.Combine(drive.Name, "Comics"));
+                        WriteComicsFolderContents(comics, outFile);
+                    }
                 }
                 outFile.Close();
             }
@@ -182,6 +214,18 @@ namespace ExtractMovieNames
                 x.Serialize(writer, moviesList);
                 writer.Close();
             }
+        }
+
+        private void WriteComicsFolderContents(DirectoryInfo comics, StreamWriter outFile)
+        {
+            var comicFolders = GetComicFolders(comics.FullName);
+            if (!comicFolders.Any())
+                return;
+
+            outFile.WriteLine();
+            outFile.WriteLine("---Comics---");
+            comicFolders.ToList().ForEach(folder => outFile.WriteLine(folder));
+            outFile.WriteLine("---End Comics---");
         }
         #endregion
 
@@ -258,6 +302,40 @@ namespace ExtractMovieNames
             }
         }
         #endregion
+
+        private string[] GetComicFolders(string path)
+        {
+            try
+            {
+                List<string> folders = new List<string>();
+                foreach (string folder in Directory.GetDirectories(path))
+                {
+                    if (Directory.GetFiles(folder).Any())
+                    {
+                        DirectoryInfo currentFolder = new DirectoryInfo(Path.Combine(path, folder));
+                        long directorySize = GetDirectorySize(folder);
+                        double size = (((directorySize / 1024.0) / 1024.0) / 1024.0);
+                        string sz = size.ToString("0.00");
+                        if (!folder.EndsWith(@"\Comics"))
+                        {
+                            string parentFolder = Path.GetDirectoryName(folder);
+                            folders.Add($"{Path.GetFileName(folder)} ({parentFolder.Substring(parentFolder.IndexOf(@"Comics\") + 7)})");
+                        }
+                    }
+                }
+
+                Directory.GetDirectories(path).ToList().ForEach(subfolder => folders.AddRange(GetComicFolders(subfolder)));
+
+                return folders.ToArray();
+            }
+            catch (System.Exception ex)
+            {
+                MessageBox.Show("Error getting folders from \"" + path + "\"" + Environment.NewLine + Environment.NewLine + ex.Message);
+
+                return null;
+            }
+        }
+
         static long GetDirectorySize(string p)
         {
             // 1.
