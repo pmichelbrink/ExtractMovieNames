@@ -286,11 +286,18 @@ namespace ExtractMovieNames
                 List<string> folders = new List<string>();
                 foreach (string folder in Directory.GetDirectories(path))
                 {
-                    DirectoryInfo currentFolder = new DirectoryInfo(Path.Combine(path, folder));
-                    long directorySize = GetDirectorySize(folder);
-                    double size = (((directorySize / 1024.0) / 1024.0) / 1024.0);
-                    string sz = size.ToString("0.00");
-                    folders.Add(folder + "_(" + sz + " GB)");
+                    try
+                    {
+                        DirectoryInfo currentFolder = new DirectoryInfo(Path.Combine(path, folder));
+                        long directorySize = GetDirectorySize(folder);
+                        double size = (((directorySize / 1024.0) / 1024.0) / 1024.0);
+                        string sz = size.ToString("0.00");
+                        folders.Add(folder + "_(" + sz + " GB)");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        MessageBox.Show("Error getting folders from \"" + folder + "\"" + Environment.NewLine + Environment.NewLine + ex.Message);
+                    }
                 }
                 return folders.ToArray();
             }
